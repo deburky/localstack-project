@@ -10,18 +10,6 @@ on:
 jobs:
   deploy-and-test:
     runs-on: ubuntu-latest
-    
-    services:
-      localstack:
-        image: localstack/localstack:latest
-        env:
-          SERVICES: s3,lambda,apigateway,iam,sts,cloudformation
-          DEFAULT_REGION: us-east-1
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          LAMBDA_EXECUTOR: docker
-        ports:
-          - 4566:4566
 
     steps:
       - uses: actions/checkout@v3
@@ -39,11 +27,27 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install awscli-local
+
+      - name: Start LocalStack
+        run: |
+          docker pull localstack/localstack:latest
+          docker run -d \
+            --name localstack \
+            -p 4566:4566 \
+            -e SERVICES=s3,lambda,apigateway,iam,sts,cloudformation \
+            -e DEFAULT_REGION=us-east-1 \
+            -e AWS_ACCESS_KEY_ID=test \
+            -e AWS_SECRET_ACCESS_KEY=test \
+            -e DEBUG=1 \
+            localstack/localstack:latest
 
       - name: Wait for LocalStack
         run: |
-          timeout 60 bash -c 'while ! curl -s http://localhost:4566/_localstack/health | grep -q "\"running\""; do echo "Waiting for LocalStack..."; sleep 2; done'
+          echo "Waiting for LocalStack to be ready..."
+          timeout 120 bash -c 'until curl -s http://localhost:4566/_localstack/health | grep -q "\"running\""; do echo "Waiting for LocalStack..."; sleep 3; done'
           echo "LocalStack is ready!"
+          curl -s http://localhost:4566/_localstack/health | jq .
 
       - name: Build SAM application
         run: |
@@ -137,3 +141,5 @@ jobs:
           aws cloudformation delete-stack \
             --stack-name ml-prediction-stack \
             --region us-east-1 || true
+          docker stop localstack || true
+          docker rm localstack || true
