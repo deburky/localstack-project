@@ -98,16 +98,24 @@ cd src && python train.py && cd ..
 
 Run `make help` to see all available commands:
 
+### Main Commands
 - `make install` - Install Python dependencies
 - `make train-models` - Train and save ML models
 - `make start` - Start LocalStack and deploy the service
-- `make stop` - Stop LocalStack
+- `make stop` - Stop LocalStack and SAM API
 - `make restart` - Restart LocalStack and redeploy
 - `make build` - Build SAM application
 - `make deploy` - Deploy to LocalStack
 - `make test` - Run tests
-- `make clean` - Clean up build artifacts and containers
 - `make test-endpoint` - Quick test of the prediction endpoint
+- `make clean` - Clean up everything (containers, images, logs)
+- `make deep-clean` - Deep clean (removes ALL Docker images/containers)
+
+### LocalStack Utilities
+- `make localstack-status` - Check LocalStack health
+- `make list-stacks` - List CloudFormation stacks
+- `make list-lambdas` - List Lambda functions
+- `make list-apis` - List API Gateway APIs
 
 ## ML Model Training
 
@@ -254,6 +262,74 @@ Response shows anomaly detected:
 - Provides local emulation of AWS services
 - Runs in Docker container on port 4566
 - Supports S3, Lambda, API Gateway, IAM, STS, CloudFormation
+
+## Using awslocal CLI
+
+The project includes [`awslocal`](https://github.com/localstack/awscli-local), a thin wrapper around the AWS CLI for use with LocalStack.
+
+### Why awslocal?
+
+Instead of typing:
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls
+```
+
+You can simply use:
+```bash
+awslocal s3 ls
+```
+
+### Installation
+
+Already included in `requirements.txt`:
+```bash
+pip install awscli-local
+```
+
+### Usage Examples
+
+```bash
+# List S3 buckets
+awslocal s3 ls
+
+# Create a bucket
+awslocal s3 mb s3://my-bucket
+
+# List Lambda functions
+awslocal lambda list-functions
+
+# List CloudFormation stacks
+awslocal cloudformation list-stacks
+
+# Get API Gateway APIs
+awslocal apigateway get-rest-apis
+
+# Invoke Lambda function
+awslocal lambda invoke --function-name PredictFunction output.json
+```
+
+### Makefile Shortcuts
+
+We've added convenient commands:
+```bash
+make localstack-status  # Check LocalStack health
+make list-stacks        # List CloudFormation stacks
+make list-lambdas       # List Lambda functions
+make list-apis          # List API Gateway APIs
+```
+
+### Configuration
+
+`awslocal` automatically configures:
+- **Endpoint**: `http://localhost:4566`
+- **Credentials**: Test credentials
+- **Region**: `us-east-1` (or from `AWS_DEFAULT_REGION`)
+
+Override with environment variables:
+```bash
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_DEFAULT_REGION=us-east-1
+```
 
 ## Development
 
