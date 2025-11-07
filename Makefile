@@ -16,6 +16,12 @@ help:
 	@echo "  make clean          - Clean up everything (containers, images, logs)"
 	@echo "  make deep-clean     - Deep clean (removes ALL Docker images/containers)"
 	@echo ""
+	@echo "LocalStack Utilities:"
+	@echo "  make localstack-status - Check LocalStack health"
+	@echo "  make list-stacks       - List CloudFormation stacks"
+	@echo "  make list-lambdas      - List Lambda functions"
+	@echo "  make list-apis         - List API Gateway APIs"
+	@echo ""
 
 # Install dependencies
 install:
@@ -89,4 +95,21 @@ test-endpoint:
 	@curl -X POST "http://127.0.0.1:3000/predict" \
 		-H "Content-Type: application/json" \
 		-d '{"features": [1.0, 2.0, 3.0, 4.0]}' | jq .
+
+# LocalStack AWS CLI shortcuts (requires awslocal)
+localstack-status:
+	@echo "📊 Checking LocalStack services..."
+	@curl -s http://localhost:4566/_localstack/health | jq .
+
+list-stacks:
+	@echo "📚 CloudFormation stacks in LocalStack..."
+	@awslocal cloudformation list-stacks
+
+list-lambdas:
+	@echo "⚡ Lambda functions in LocalStack..."
+	@awslocal lambda list-functions
+
+list-apis:
+	@echo "🌐 API Gateway APIs in LocalStack..."
+	@awslocal apigateway get-rest-apis
 
