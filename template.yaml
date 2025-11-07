@@ -33,7 +33,7 @@ Resources:
       MemorySize: 512
       Timeout: 30
       Architectures:
-        - x86_64
+        - arm64
       Events:
         PredictAPI:
           Type: Api

@@ -1,9 +1,10 @@
 import json
-import numpy as np
-import joblib
 import os
-from sklearn.preprocessing import StandardScaler
+
+import joblib
+import numpy as np
 from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import StandardScaler
 
 # Load pre-trained models (or fall back to training if models don't exist)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.pkl")
@@ -87,4 +88,4 @@ def handler(event, context):
             "body": json.dumps({
                 "error": f"Internal server error: {str(e)}"
             })
-        }
+        }        }
