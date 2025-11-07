@@ -1,0 +1,47 @@
+/opt/homebrew/Cellar/aws-sam-cli/1.146.0/libexec/lib/python3.14/site-packages/samtranslator/compat.py:2: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic import v1 as pydantic
+No current session found, using default AWS::AccountId
+Initializing the lambda functions containers.
+Local image was not found.
+Removing rapid images for repo predictfunction
+Building image.................
+Using local image: predictfunction:rapid-arm64.
+
+SAM_CONTAINER_ID: 571b26d3b13b0aa66a8b0ded4ff3a32eaf407ec6d30e402f808ec8e4b9a819bf
+Containers created. Waiting for readiness...
+Waiting for 1 containers to be running...
+All 1 containers running after 0.0 seconds
+All containers are ready.
+Linking authorizer skipped for route '/predict', authorizer 'None' is unsupported or not found
+Mounting PredictFunction at http://127.0.0.1:3000/predict [POST]
+You can now browse to the above endpoints to invoke your functions. You do not need to restart/reload SAM CLI while working on your functions, changes will be reflected instantly/automatically. If you used sam build before running local commands, you will need to re-run sam build for the changes to be picked up. You only need to restart SAM CLI if you update your AWS SAM template
+ * Tip: There are .env files present. Install python-dotenv to use them.
+2025-11-07 15:20:14 [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:3000
+2025-11-07 15:20:14 [33mPress CTRL+C to quit[0m
+2025-11-07 15:20:14 127.0.0.1 - - [07/Nov/2025 15:20:14] "[31m[1mGET /predict HTTP/1.1[0m" 403 -
+Invoking Container created from predictfunction:python3.9-v1
+Reuse the created warm container for Lambda function 'PredictFunction'
+Lambda function 'PredictFunction' is already running
+START RequestId: d9b0ad13-6f2f-4302-aeae-3a49ae34ed03 Version: $LATEST
+END RequestId: 2f8ed4f3-690d-45cf-8fd3-2a9663e4a629
+REPORT RequestId: 2f8ed4f3-690d-45cf-8fd3-2a9663e4a629	Init Duration: 0.09 ms	Duration: 452.53 ms	Billed Duration: 453 ms	Memory Size: 512 MB	Max Memory Used: 512 MB	
+
+No Content-Type given. Defaulting to 'application/json'.
+2025-11-07 15:20:15 127.0.0.1 - - [07/Nov/2025 15:20:15] "POST /predict HTTP/1.1" 200 -
+Invoking Container created from predictfunction:python3.9-v1
+Reuse the created warm container for Lambda function 'PredictFunction'
+Lambda function 'PredictFunction' is already running
+START RequestId: 6d56451d-0e9a-4497-89a6-3b2a7cac642a Version: $LATEST
+END RequestId: 13f9276d-702f-4e32-b7a9-b42e6b6650bb
+REPORT RequestId: 13f9276d-702f-4e32-b7a9-b42e6b6650bb	Duration: 65.71 ms	Billed Duration: 66 ms	Memory Size: 512 MB	Max Memory Used: 512 MB	
+
+No Content-Type given. Defaulting to 'application/json'.
+2025-11-07 15:20:30 127.0.0.1 - - [07/Nov/2025 15:20:30] "POST /predict HTTP/1.1" 200 -
+Exception ignored while finalizing file <http.client.HTTPResponse object at 0x1144207f0>:
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/client.py", line 432, in close
+    super().close() # set "closed" flag
+  File "/opt/homebrew/Cellar/python@3.14/3.14.0_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/http/client.py", line 445, in flush
+    self.fp.flush()
+ValueError: I/O operation on closed file.

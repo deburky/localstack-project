@@ -1,0 +1,88 @@
+name: Deploy and Test ML Prediction Stack
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3,lambda,apigateway,iam,sts,cloudformation
+          DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          LAMBDA_EXECUTOR: docker
+        ports:
+          - 4566:4566
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pnpm install
+          pip install -r requirements.txt
+
+      - name: Wait for LocalStack
+        run: |
+          timeout 30 bash -c 'while ! curl -s http://localhost:4566/_localstack/health | grep -q "\"running\""; do sleep 1; done'
+
+      - name: Deploy stack
+        run: |
+          export AWS_ACCESS_KEY_ID=test
+          export AWS_SECRET_ACCESS_KEY=test
+          export AWS_DEFAULT_REGION=us-east-1
+          cd ml-prediction-app
+          pnpm run build
+          pnpm run deploy
+
+      - name: Test prediction endpoint
+        run: |
+          # Wait for API to be available
+          sleep 10
+          
+          # Get API ID from LocalStack
+          API_ID=$(aws --endpoint-url=http://localhost:4566 --region us-east-1 \
+            apigateway get-rest-apis --query 'items[?name==`ml-prediction-app`].id' \
+            --output text)
+          
+          # Test endpoint
+          RESPONSE=$(curl -s -X POST \
+            "http://localhost:4566/restapis/$API_ID/test/_user_request_/predict" \
+            -H "Content-Type: application/json" \
+            -d '{"features": [1.0, 2.0, 3.0, 4.0]}')
+          
+          # Verify response
+          echo "Response: $RESPONSE"
+          PREDICTION=$(echo $RESPONSE | jq -r '.prediction')
+          if [[ "$PREDICTION" != "30.0" ]]; then
+            echo "Unexpected prediction value: $PREDICTION"
+            exit 1
+          fi
+          echo "Test passed successfully!"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          cd ml-prediction-app
+          pnpm run remove
