@@ -99,7 +99,7 @@ curl -X POST "$ENDPOINT" \
 echo -e "\n\n${GREEN}✅ Deployment and test complete!${NC}"
 
 # Find the actual running SAM API process
-ACTUAL_PID=$(ps aux | grep '[s]am local start-api' | awk '{print $2}')
+ACTUAL_PID=$(ps aux | grep '[s]am local start-api' | awk '{print $2}' | head -1)
 
 if [ -n "$ACTUAL_PID" ]; then
     echo -e "${GREEN}🚀 API is running in the background (PID: $ACTUAL_PID)${NC}"
@@ -109,6 +109,8 @@ if [ -n "$ACTUAL_PID" ]; then
     echo "  -d '{\"features\": [1.0, 2.0, 3.0, 4.0]}'"
     echo -e "\n${YELLOW}To stop the API, run:${NC}"
     echo "kill $ACTUAL_PID"
+    echo -e "\n${YELLOW}Or use:${NC}"
+    echo "make stop"
 else
     echo -e "${RED}⚠️  Could not find running API process${NC}"
 fi
