@@ -3,3 +3,19 @@ __pycache__/
 .venv/
 uv.lock
 DS_Store
+
+# Log files
+*.log
+
+# SAM build artifacts
+.aws-sam/
+
+# LocalStack data
+localstack_data/
+
+# Python cache
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
