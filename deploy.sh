@@ -24,8 +24,18 @@ export AWS_ACCESS_KEY_ID=test
 export AWS_SECRET_ACCESS_KEY=test
 export AWS_DEFAULT_REGION=us-east-1
 
+# Train ML models if they don't exist
+echo -e "\n${YELLOW}2. Checking for pre-trained models...${NC}"
+if [ ! -f "src/model.pkl" ] || [ ! -f "src/scaler.pkl" ]; then
+    echo -e "${YELLOW}Training ML models...${NC}"
+    cd src && python train.py && cd ..
+    echo -e "${GREEN}✅ Models trained${NC}"
+else
+    echo -e "${GREEN}✅ Pre-trained models found${NC}"
+fi
+
 # Deploy with SAM
-echo -e "\n${YELLOW}2. Building and deploying with SAM...${NC}"
+echo -e "\n${YELLOW}3. Building and deploying with SAM...${NC}"
 export PIP_NO_CACHE_DIR=false
 export PIP_USE_PEP517=false
 # Use UV for pip installation if available
@@ -36,12 +46,12 @@ fi
 sam build --use-container --use-container
 
 # Start the API in background, redirecting output to a log file
-echo -e "\n${YELLOW}3. Starting SAM API...${NC}"
+echo -e "\n${YELLOW}4. Starting SAM API...${NC}"
 nohup sam local start-api --warm-containers EAGER > sam_api.log 2>&1 &
 SAM_PID=$!
 
 # Wait for API to be ready
-echo -e "\n${YELLOW}4. Waiting for API to start...${NC}"
+echo -e "\n${YELLOW}5. Waiting for API to start...${NC}"
 
 # Function to check if process is still running
 check_process() {
@@ -81,7 +91,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Test the endpoint
-echo -e "\n${YELLOW}5. Making a test prediction...${NC}"
+echo -e "\n${YELLOW}6. Making a test prediction...${NC}"
 curl -X POST "$ENDPOINT" \
   -H "Content-Type: application/json" \
   -d '{"features": [1.0, 2.0, 3.0, 4.0]}'
