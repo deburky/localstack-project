@@ -133,6 +133,21 @@ This generates:
 - **Feature Scaling**: StandardScaler for normalization
 - **Training Data**: 1000 samples with 4 features (synthetic data)
 
+## Running the Service
+
+Run the Make command:
+
+```bash
+make start
+```
+
+This will:
+1. Start LocalStack (if not running)
+2. Train ML models (if not already trained)
+3. Build the SAM application with Docker
+4. Start the API on `http://127.0.0.1:3000`
+5. Run a test prediction
+
 ## Testing the API
 
 ### Quick Test
@@ -143,30 +158,73 @@ make test-endpoint
 
 ### Manual Test
 
+After deploying the endpoint, make predictions by sending a payload request:
+
 ```bash
 curl -X POST "http://127.0.0.1:3000/predict" \
   -H "Content-Type: application/json" \
   -d '{"features": [1.0, 2.0, 3.0, 4.0]}'
 ```
 
-### Expected Response
+### Example Response
 
 ```json
 {
   "prediction": {
-    "base_prediction": -0.234,
-    "confidence": 0.892,
-    "feature_importance": [0.1, 0.2, 0.3, 0.4],
+    "base_prediction": -7.846485258771873,
+    "confidence": 0.7292884072848042,
+    "feature_importance": [
+      0.099999999999,
+      0.199999999998,
+      0.299999999997,
+      0.399999999996
+    ],
     "is_anomaly": false,
     "stats": {
       "mean": 2.5,
-      "std": 1.118,
+      "std": 1.118033988749895,
       "min": 1.0,
       "max": 4.0
     }
   },
   "features": [1.0, 2.0, 3.0, 4.0],
-  "features_scaled": [-1.34, -0.45, 0.45, 1.34]
+  "features_scaled": [
+    -1.3051872133935079,
+    -0.9086410233196137,
+    -0.6313678379293637,
+    -0.2933980288662639
+  ]
+}
+```
+
+### Testing Anomaly Detection
+
+Test with extreme values to trigger anomaly detection:
+
+```bash
+curl -X POST "http://127.0.0.1:3000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"features": [100.0, 200.0, 300.0, 400.0]}'
+```
+
+Response shows anomaly detected:
+
+```json
+{
+  "prediction": {
+    "base_prediction": 752.4973097028189,
+    "confidence": 0.028924642251139054,
+    "feature_importance": [0.1, 0.2, 0.3, 0.4],
+    "is_anomaly": true,
+    "stats": {
+      "mean": 250.0,
+      "std": 111.80339887498948,
+      "min": 100.0,
+      "max": 400.0
+    }
+  },
+  "features": [100.0, 200.0, 300.0, 400.0],
+  "features_scaled": [30.65, 58.46, 92.64, 119.24]
 }
 ```
 
@@ -297,17 +355,43 @@ The deployment automatically sets:
 - `AWS_DEFAULT_REGION=us-east-1`
 - `AWS_ENDPOINT_URL=http://localhost:4566`
 
-## Project Features
+## Key Features
 
-- ✅ Pre-trained ML models for fast inference
-- ✅ Anomaly detection with IsolationForest
-- ✅ Feature scaling and normalization
-- ✅ Comprehensive prediction statistics
-- ✅ Container-based Lambda deployment
-- ✅ Local development with SAM and LocalStack
-- ✅ CI/CD with GitHub Actions
-- ✅ Simple Makefile commands
-- ✅ Detailed error handling and logging
+### Performance Optimizations
+- ✅ **Pre-trained Models**: Models are trained once and loaded at Lambda startup for fast inference
+- ✅ **Cold Start Optimization**: Models loaded during initialization, not per request
+- ✅ **Efficient Scaling**: StandardScaler pre-fitted on training data
+
+### ML Capabilities
+- ✅ **Anomaly Detection**: IsolationForest detects outliers in real-time
+- ✅ **Feature Scaling**: StandardScaler normalizes inputs for consistent predictions
+- ✅ **Comprehensive Metrics**: Returns confidence scores, feature importance, and statistics
+- ✅ **Robust Error Handling**: Validates input and handles edge cases gracefully
+
+### Development & Deployment
+- ✅ **Container-based Lambda**: Docker images for consistent environments
+- ✅ **Local Development**: SAM and LocalStack for testing without AWS
+- ✅ **CI/CD Pipeline**: GitHub Actions with automated testing
+- ✅ **Simple Commands**: Makefile for easy deployment and management
+- ✅ **Automated Training**: Models trained automatically during deployment
+
+### Production Ready
+- ✅ **Comprehensive Testing**: Unit tests and integration tests
+- ✅ **Code Quality**: Flake8 linting and validation
+- ✅ **Detailed Logging**: Debug and error tracking
+- ✅ **Documentation**: Complete README with examples
+
+## Conclusion
+
+This project demonstrates how to:
+
+- **Build ML services with AWS Lambda** using containerized deployments
+- **Use LocalStack for local development** to avoid AWS costs during development
+- **Implement scikit-learn in serverless functions** with pre-trained models
+- **Automate deployment and testing** with Makefile and GitHub Actions
+- **Create production-ready ML endpoints** with anomaly detection and comprehensive metrics
+- **Optimize for performance** by loading models once at startup
+- **Implement CI/CD** with automated testing using `act` before pushing to GitHub
 
 ## License
 
