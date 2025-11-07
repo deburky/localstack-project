@@ -26,7 +26,7 @@ help:
 # Install dependencies
 install:
 	@echo "📦 Installing dependencies..."
-	pip install -r requirements.txt
+	uv pip install -r requirements.txt
 	@echo "✅ Dependencies installed!"
 
 # Train ML models
@@ -96,7 +96,7 @@ test-endpoint:
 		-H "Content-Type: application/json" \
 		-d '{"features": [1.0, 2.0, 3.0, 4.0]}' | jq .
 
-# LocalStack AWS CLI shortcuts (requires awslocal)
+# LocalStack utilities
 localstack-status:
 	@echo "📊 Checking LocalStack services..."
 	@curl -s http://localhost:4566/_localstack/health | jq .
