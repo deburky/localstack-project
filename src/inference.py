@@ -88,4 +88,4 @@ def handler(event, context):
             "body": json.dumps({
                 "error": f"Internal server error: {str(e)}"
             })
-        }        }
+        }
