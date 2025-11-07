@@ -19,3 +19,6 @@ localstack_data/
 *.egg-info/
 dist/
 build/
+
+# ML models
+*.pkl

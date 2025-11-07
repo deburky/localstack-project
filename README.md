@@ -1,19 +1,27 @@
 # ML Prediction Service with LocalStack and SAM
 
-This project demonstrates how to set up a machine learning prediction service using LocalStack for local AWS service emulation and SAM (Serverless Application Model) for local development. The service exposes a REST API endpoint that accepts feature data and returns predictions.
+This project demonstrates how to set up a machine learning prediction service using LocalStack for local AWS service emulation and SAM (Serverless Application Model) for local development. The service exposes a REST API endpoint that accepts feature data and returns predictions using pre-trained scikit-learn models.
 
 ## Project Structure
 
 ```
 localstack-project/
-├── ml-prediction-app/
-│   └── packages/
-│       └── functions/
-│           └── src/
-│               └── ml_prediction.py    # Lambda function for predictions
-├── template.yaml                       # SAM template for local testing
-├── deploy.sh                          # Deployment script
-└── docker-compose.yml                 # LocalStack configuration
+├── src/
+│   ├── train.py              # Script to train and save ML models
+│   ├── inference.py          # Lambda function for predictions
+│   ├── Dockerfile            # Container definition for Lambda
+│   ├── requirements.txt      # Python dependencies
+│   ├── model.pkl            # Pre-trained outlier detection model (generated)
+│   └── scaler.pkl           # Pre-trained feature scaler (generated)
+├── tests/
+│   └── test_s3_operations.py
+├── .github/
+│   └── workflows/
+│       └── deploy-and-test.yml  # CI/CD pipeline
+├── template.yaml             # SAM template for infrastructure
+├── deploy.sh                 # Deployment script
+├── Makefile                  # Convenient make commands
+└── docker-compose.yml        # LocalStack configuration
 ```
 
 ## Prerequisites
@@ -27,8 +35,7 @@ Before running this project, ensure you have the following installed:
    - **Installation**: 
      - macOS: `brew install --cask docker` or download from [docker.com](https://www.docker.com/products/docker-desktop)
      - Linux: Follow [Docker Engine installation guide](https://docs.docker.com/engine/install/)
-   - **Verify**: `docker --version` and `docker-compose --version`
-   - **Note**: Make sure Docker is running before executing `deploy.sh`
+   - **Verify**: `docker --version` && `docker-compose --version`
 
 2. **AWS SAM CLI** (Serverless Application Model)
    - **Why**: Used to build, test, and run the Lambda function locally
@@ -36,70 +43,105 @@ Before running this project, ensure you have the following installed:
      - macOS: `brew install aws-sam-cli`
      - Linux/Windows: Follow [AWS SAM CLI installation guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
    - **Verify**: `sam --version`
-   - **Minimum version**: 1.50.0 or higher recommended
 
 3. **Python 3.9+**
-   - **Why**: Required for Lambda function runtime
+   - **Why**: Required for Lambda function runtime and training scripts
    - **Installation**:
-     - macOS: `brew install python@3.9` or higher
+     - macOS: `brew install python@3.9`
      - Linux: Use your package manager (e.g., `apt install python3.9`)
    - **Verify**: `python3 --version`
 
-4. **curl**
-   - **Why**: Used by the deployment script to check service health and test the API
+4. **Make** (optional but recommended)
+   - **Why**: Simplifies running common commands
    - **Installation**: Usually pre-installed on macOS/Linux
-   - **Verify**: `curl --version`
-
-### Optional
-
-5. **uv** (Fast Python package installer)
-   - **Why**: Speeds up dependency installation (optional but recommended)
-   - **Installation**: `pip install uv` or `brew install uv`
-   - **Note**: The deployment script will automatically use `uv` if available
+   - **Verify**: `make --version`
 
 ### Quick Prerequisites Check
 
-Run these commands to verify your setup:
-
 ```bash
-# Check Docker
+# Check all tools
 docker --version && docker ps
-
-# Check SAM CLI
 sam --version
-
-# Check Python
 python3 --version
-
-# Check curl
-curl --version
+make --version
 ```
-
-All commands should return version information without errors.
 
 ## Quick Start
 
-1. **Clone and Install Dependencies**
-   ```bash
-   git clone <repository-url>
-   cd localstack-project
-   chmod +x deploy.sh
-   ```
+### Using Makefile (Recommended)
 
-2. **Deploy and Run**
-   ```bash
-   ./deploy.sh
-   ```
+```bash
+# 1. Install dependencies
+make install
 
-   This script will:
-   - Start LocalStack if not running
-   - Build and deploy the SAM application
-   - Start the API in the background
-   - Run a test prediction
+# 2. Train ML models
+make train-models
+
+# 3. Start LocalStack and deploy
+make start
+```
+
+### Manual Setup
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Train ML models
+cd src && python train.py && cd ..
+
+# 3. Deploy
+./deploy.sh
+```
+
+## Available Make Commands
+
+Run `make help` to see all available commands:
+
+- `make install` - Install Python dependencies
+- `make train-models` - Train and save ML models
+- `make start` - Start LocalStack and deploy the service
+- `make stop` - Stop LocalStack
+- `make restart` - Restart LocalStack and redeploy
+- `make build` - Build SAM application
+- `make deploy` - Deploy to LocalStack
+- `make test` - Run tests
+- `make clean` - Clean up build artifacts and containers
+- `make test-endpoint` - Quick test of the prediction endpoint
+
+## ML Model Training
+
+The service uses pre-trained ML models for better performance:
+
+### Training Models
+
+```bash
+# Using Make
+make train-models
+
+# Or manually
+cd src && python train.py
+```
+
+This generates:
+- `model.pkl` - IsolationForest for anomaly detection
+- `scaler.pkl` - StandardScaler for feature normalization
+
+### Model Details
+
+- **Outlier Detection**: IsolationForest with 10% contamination
+- **Feature Scaling**: StandardScaler for normalization
+- **Training Data**: 1000 samples with 4 features (synthetic data)
 
 ## Testing the API
 
-Once deployed, you can test the API using curl:
+### Quick Test
+
+```bash
+make test-endpoint
+```
+
+### Manual Test
 
 ```bash
 curl -X POST "http://127.0.0.1:3000/predict" \
@@ -107,85 +149,166 @@ curl -X POST "http://127.0.0.1:3000/predict" \
   -d '{"features": [1.0, 2.0, 3.0, 4.0]}'
 ```
 
-Expected response:
+### Expected Response
+
 ```json
 {
-  "prediction": 30.0,
-  "features": [1.0, 2.0, 3.0, 4.0]
+  "prediction": {
+    "base_prediction": -0.234,
+    "confidence": 0.892,
+    "feature_importance": [0.1, 0.2, 0.3, 0.4],
+    "is_anomaly": false,
+    "stats": {
+      "mean": 2.5,
+      "std": 1.118,
+      "min": 1.0,
+      "max": 4.0
+    }
+  },
+  "features": [1.0, 2.0, 3.0, 4.0],
+  "features_scaled": [-1.34, -0.45, 0.45, 1.34]
 }
 ```
 
 ## How It Works
 
-1. **Lambda Function (`ml_prediction.py`)**
-   - Accepts POST requests with feature data
-   - Performs a simple calculation (sum of features * 3.0) as a mock prediction
-   - Returns prediction results in JSON format
+### 1. Model Training (`train.py`)
+- Generates synthetic training data (1000 samples)
+- Trains IsolationForest for anomaly detection
+- Trains StandardScaler for feature normalization
+- Saves models as `.pkl` files
 
-2. **SAM Template (`template.yaml`)**
-   - Defines the API Gateway and Lambda function
-   - Configures the integration between them
-   - Sets up environment variables and permissions
+### 2. Lambda Function (`inference.py`)
+- Loads pre-trained models at startup (cold start optimization)
+- Accepts POST requests with feature data
+- Scales features using pre-trained scaler
+- Detects anomalies using pre-trained model
+- Calculates prediction statistics
+- Returns comprehensive prediction results
 
-3. **LocalStack**
-   - Provides local emulation of AWS services
-   - Runs in Docker container
-   - Exposes services on port 4566
+### 3. SAM Template (`template.yaml`)
+- Defines Lambda function as container image
+- Configures API Gateway integration
+- Sets up proper IAM permissions
+- Manages deployment stages
+
+### 4. LocalStack
+- Provides local emulation of AWS services
+- Runs in Docker container on port 4566
+- Supports S3, Lambda, API Gateway, IAM, STS, CloudFormation
 
 ## Development
 
 ### Making Changes
 
-1. Edit the Lambda function in `ml-prediction-app/packages/functions/src/ml_prediction.py`
-2. Modify the SAM template in `template.yaml` if needed
-3. Run `./deploy.sh` to deploy your changes
+1. **Update ML Models**
+   ```bash
+   # Retrain models with new data
+   cd src && python train.py
+   ```
+
+2. **Update Lambda Function**
+   ```bash
+   # Edit src/inference.py
+   # Then rebuild and redeploy
+   make restart
+   ```
+
+3. **Update Infrastructure**
+   ```bash
+   # Edit template.yaml
+   # Validate and deploy
+   sam validate
+   make deploy
+   ```
 
 ### Stopping the Service
 
-To stop the API, find its PID and kill it:
 ```bash
-ps aux | grep "sam local start-api"
-kill <PID>
+# Stop everything
+make stop
+
+# Or manually
+docker-compose down
+pkill -f "sam local start-api"
 ```
+
+## CI/CD
+
+The project includes a GitHub Actions workflow (`.github/workflows/deploy-and-test.yml`) that:
+
+- ✅ Validates SAM template
+- ✅ Builds the application
+- ✅ Runs Python tests
+- ✅ Checks code quality with flake8
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"sam: No such file or directory" error**
-   - **Problem**: AWS SAM CLI is not installed
-   - **Solution**: Install SAM CLI using `brew install aws-sam-cli` (macOS) or follow the [official guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
-   - **Check**: Run `sam --version` to verify installation
+1. **Models Not Loading**
+   ```bash
+   # Problem: Models not found in Lambda
+   # Solution: Train models before building
+   make train-models
+   make build
+   ```
 
-2. **Docker-related errors**
-   - **Problem**: Docker is not running or not installed
-   - **Solution**: 
-     - Start Docker Desktop application
-     - Verify with `docker ps` - should not return an error
-   - **Common error**: "Cannot connect to the Docker daemon"
+2. **Docker Issues**
+   ```bash
+   # Check Docker is running
+   docker ps
+   
+   # Restart Docker if needed
+   make clean
+   make start
+   ```
 
 3. **LocalStack Connection Issues**
    ```bash
    # Check LocalStack health
    curl http://localhost:4566/_localstack/health
    
-   # If not running, start it manually
-   docker-compose up -d
+   # Restart LocalStack
+   docker-compose restart
    ```
 
-4. **API Issues**
-   - Check `sam_api.log` for API Gateway and Lambda logs
-   - Verify the API is running: `curl http://127.0.0.1:3000/predict`
-   - Look for port conflicts (port 3000 already in use)
+4. **Port Already in Use**
+   ```bash
+   # Find process using port 3000
+   lsof -i :3000
+   
+   # Kill the process
+   kill -9 <PID>
+   ```
 
-5. **Deployment Issues**
-   - Run `sam validate` to check template syntax
-   - Check SAM build output in `.aws-sam/build`
-   - Ensure you have sufficient disk space for Docker images
+5. **SAM Build Failures**
+   ```bash
+   # Clean and rebuild
+   make clean
+   make build
+   ```
 
 ## Environment Variables
 
-The deployment script automatically sets these variables:
+The deployment automatically sets:
 - `AWS_ACCESS_KEY_ID=test`
 - `AWS_SECRET_ACCESS_KEY=test`
 - `AWS_DEFAULT_REGION=us-east-1`
+- `AWS_ENDPOINT_URL=http://localhost:4566`
+
+## Project Features
+
+- ✅ Pre-trained ML models for fast inference
+- ✅ Anomaly detection with IsolationForest
+- ✅ Feature scaling and normalization
+- ✅ Comprehensive prediction statistics
+- ✅ Container-based Lambda deployment
+- ✅ Local development with SAM and LocalStack
+- ✅ CI/CD with GitHub Actions
+- ✅ Simple Makefile commands
+- ✅ Detailed error handling and logging
+
+## License
+
+MIT

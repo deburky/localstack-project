@@ -1,11 +1,24 @@
 import json
 import numpy as np
+import joblib
+import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import IsolationForest
 
-# Initialize models
-scaler = StandardScaler()
-outlier_detector = IsolationForest(contamination=0.1, random_state=42)
+# Load pre-trained models (or fall back to training if models don't exist)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.pkl")
+SCALER_PATH = os.path.join(os.path.dirname(__file__), "scaler.pkl")
+
+if os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH):
+    print("Loading pre-trained models...")
+    scaler = joblib.load(SCALER_PATH)
+    outlier_detector = joblib.load(MODEL_PATH)
+    print("Models loaded successfully!")
+else:
+    print("Warning: Pre-trained models not found. Initializing new models.")
+    print("Run 'python train.py' to generate pre-trained models.")
+    scaler = StandardScaler()
+    outlier_detector = IsolationForest(contamination=0.1, random_state=42)
 
 def handler(event, context):
     try:
@@ -24,8 +37,22 @@ def handler(event, context):
 
         # ML processing
         features_array = np.array(features).reshape(1, -1)
-        features_scaled = scaler.fit_transform(features_array)
-        is_outlier = outlier_detector.fit_predict(features_array)[0] == -1
+        
+        # Use pre-trained scaler (or fit if not pre-trained)
+        if hasattr(scaler, 'mean_'):
+            # Scaler is already fitted (pre-trained)
+            features_scaled = scaler.transform(features_array)
+        else:
+            # Fall back to fitting (only if models weren't pre-trained)
+            features_scaled = scaler.fit_transform(features_array)
+        
+        # Use pre-trained outlier detector (or fit if not pre-trained)
+        if hasattr(outlier_detector, 'estimators_'):
+            # Model is already fitted (pre-trained)
+            is_outlier = outlier_detector.predict(features_array)[0] == -1
+        else:
+            # Fall back to fitting (only if models weren't pre-trained)
+            is_outlier = outlier_detector.fit_predict(features_array)[0] == -1
         
         # Calculate feature importance
         abs_features = np.abs(features_array[0])

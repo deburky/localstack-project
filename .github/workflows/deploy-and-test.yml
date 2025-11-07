@@ -26,12 +26,18 @@ jobs:
           pip install aws-sam-cli
           pip install -r requirements.txt
 
+      - name: Train ML models
+        run: |
+          cd src && python train.py
+
       - name: Validate SAM template
         run: |
+          export AWS_DEFAULT_REGION=us-east-1
           sam validate
 
       - name: Build SAM application
         run: |
+          export AWS_DEFAULT_REGION=us-east-1
           sam build --use-container
 
       - name: Run Python tests
