@@ -11,8 +11,8 @@ localstack-project/
 │   ├── inference.py          # Lambda function for predictions
 │   ├── Dockerfile            # Container definition for Lambda
 │   ├── requirements.txt      # Python dependencies
-│   ├── model.pkl            # Pre-trained outlier detection model (generated)
-│   └── scaler.pkl           # Pre-trained feature scaler (generated)
+│   ├── model.pkl             # Pre-trained outlier detection model (generated)
+│   └── scaler.pkl            # Pre-trained feature scaler (generated)
 ├── tests/
 │   └── test_s3_operations.py
 ├── .github/
@@ -116,6 +116,78 @@ Run `make help` to see all available commands:
 - `make list-stacks` - List CloudFormation stacks
 - `make list-lambdas` - List Lambda functions
 - `make list-apis` - List API Gateway APIs
+
+## LocalStack CLI Utilities
+
+The project includes convenient commands for interacting with LocalStack services using `awslocal`.
+
+### Using awslocal
+
+`awslocal` is a wrapper for the AWS CLI that automatically configures the endpoint for LocalStack, making it simpler to interact with local AWS services.
+
+**Installation:**
+```bash
+pip install awscli-local
+```
+
+**Why use awslocal?**
+
+Instead of typing:
+```bash
+aws --endpoint-url=http://localhost:4566 lambda list-functions
+```
+
+You can simply use:
+```bash
+awslocal lambda list-functions
+```
+
+### Quick Examples
+
+```bash
+# Check LocalStack health
+make localstack-status
+
+# List all Lambda functions
+make list-lambdas
+# Or directly: awslocal lambda list-functions
+
+# List CloudFormation stacks
+make list-stacks
+# Or directly: awslocal cloudformation list-stacks
+
+# List API Gateway APIs
+make list-apis
+# Or directly: awslocal apigateway get-rest-apis
+
+# S3 operations
+awslocal s3 mb s3://my-bucket
+awslocal s3 ls
+awslocal s3 cp file.txt s3://my-bucket/
+
+# Lambda operations
+awslocal lambda invoke --function-name PredictFunction output.json
+awslocal lambda get-function --function-name PredictFunction
+
+# CloudFormation operations
+awslocal cloudformation describe-stacks --stack-name sam-app
+awslocal cloudformation list-stack-resources --stack-name sam-app
+```
+
+### Configuration
+
+`awslocal` automatically uses these settings:
+- **Endpoint**: `http://localhost:4566`
+- **Region**: `us-east-1` (default)
+- **Credentials**: `test/test` (dummy credentials for LocalStack)
+
+You can override these with environment variables:
+```bash
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+```
 
 ## ML Model Training
 
@@ -262,74 +334,6 @@ Response shows anomaly detected:
 - Provides local emulation of AWS services
 - Runs in Docker container on port 4566
 - Supports S3, Lambda, API Gateway, IAM, STS, CloudFormation
-
-## Using awslocal CLI
-
-The project includes [`awslocal`](https://github.com/localstack/awscli-local), a thin wrapper around the AWS CLI for use with LocalStack.
-
-### Why awslocal?
-
-Instead of typing:
-```bash
-aws --endpoint-url=http://localhost:4566 s3 ls
-```
-
-You can simply use:
-```bash
-awslocal s3 ls
-```
-
-### Installation
-
-Already included in `requirements.txt`:
-```bash
-pip install awscli-local
-```
-
-### Usage Examples
-
-```bash
-# List S3 buckets
-awslocal s3 ls
-
-# Create a bucket
-awslocal s3 mb s3://my-bucket
-
-# List Lambda functions
-awslocal lambda list-functions
-
-# List CloudFormation stacks
-awslocal cloudformation list-stacks
-
-# Get API Gateway APIs
-awslocal apigateway get-rest-apis
-
-# Invoke Lambda function
-awslocal lambda invoke --function-name PredictFunction output.json
-```
-
-### Makefile Shortcuts
-
-We've added convenient commands:
-```bash
-make localstack-status  # Check LocalStack health
-make list-stacks        # List CloudFormation stacks
-make list-lambdas       # List Lambda functions
-make list-apis          # List API Gateway APIs
-```
-
-### Configuration
-
-`awslocal` automatically configures:
-- **Endpoint**: `http://localhost:4566`
-- **Credentials**: Test credentials
-- **Region**: `us-east-1` (or from `AWS_DEFAULT_REGION`)
-
-Override with environment variables:
-```bash
-export AWS_ENDPOINT_URL=http://localhost:4566
-export AWS_DEFAULT_REGION=us-east-1
-```
 
 ## Development
 
