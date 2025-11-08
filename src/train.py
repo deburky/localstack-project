@@ -32,14 +32,14 @@ def train_and_save_models():
     # Train scaler
     print("   Training StandardScaler...")
     scaler = StandardScaler()
-    scaler.fit(X_train)
+    X_train_scaled = scaler.fit_transform(X_train)
 
-    # Train outlier detector
+    # Train outlier detector on scaled data
     print("   Training IsolationForest...")
     outlier_detector = IsolationForest(
         contamination=0.1, random_state=42, n_estimators=100
     )
-    outlier_detector.fit(X_train)
+    outlier_detector.fit(X_train_scaled)
 
     # Save models
     print("💾 Saving models...")
@@ -47,18 +47,16 @@ def train_and_save_models():
     joblib.dump(outlier_detector, "model.pkl")
 
     print("✅ Models saved successfully!")
-    print("   - scaler.pkl")
-    print("   - model.pkl")
 
     # Test the saved models
     print("\n🧪 Testing saved models...")
     loaded_scaler = joblib.load("scaler.pkl")
     loaded_model = joblib.load("model.pkl")
 
-    # Test with sample data
+    # Test with sample data (should be normal)
     test_data = np.array([[1.0, 2.0, 3.0, 4.0]])
-    scaled_data = loaded_scaler.transform(test_data)
-    prediction = loaded_model.predict(test_data)
+    test_data_scaled = loaded_scaler.transform(test_data)
+    prediction = loaded_model.predict(test_data_scaled)
 
     print(f"   Test prediction: {'Normal' if prediction[0] == 1 else 'Anomaly'}")
     print("   ✅ Models loaded and working correctly!")
