@@ -31,7 +31,7 @@ Before running this project, ensure you have the following installed:
 
 1. **Docker Desktop** (or Docker Engine + Docker Compose)
    - **Why**: Required for running LocalStack and building containerized Lambda functions
-   - **Installation**: 
+   - **Installation**:
      - macOS: `brew install --cask docker` or download from [docker.com](https://www.docker.com/products/docker-desktop)
      - Linux: Follow [Docker Engine installation guide](https://docs.docker.com/engine/install/)
    - **Verify**: `docker --version` && `docker-compose --version`
@@ -402,7 +402,7 @@ The project includes a GitHub Actions workflow (`.github/workflows/deploy-and-te
    ```bash
    # Check Docker is running
    docker ps
-   
+
    # Restart Docker if needed
    make clean
    make start
@@ -412,7 +412,7 @@ The project includes a GitHub Actions workflow (`.github/workflows/deploy-and-te
    ```bash
    # Check LocalStack health
    curl http://localhost:4566/_localstack/health
-   
+
    # Restart LocalStack
    docker-compose restart
    ```
@@ -421,7 +421,7 @@ The project includes a GitHub Actions workflow (`.github/workflows/deploy-and-te
    ```bash
    # Find process using port 3000
    lsof -i :3000
-   
+
    # Kill the process
    kill -9 <PID>
    ```

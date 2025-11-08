@@ -2,7 +2,7 @@
 # Note: checkmake reports maxbodylength warnings for help/start/clean targets
 # These are intentional - complex deployment tasks require multiple steps
 
-.PHONY: all help start stop restart build clean train-models install test test-endpoint check-localstack start-api
+.PHONY: all help start stop restart build clean train-models install setup-hooks test test-endpoint check-localstack start-api
 
 # Default target
 all: help
@@ -10,14 +10,14 @@ all: help
 help:
 	@echo "🚀 LocalStack ML Prediction Service - Available Commands:"
 	@echo ""
-	@echo "  make install        - Install Python dependencies"
-	@echo "  make train-models   - Train and save ML models"
-	@echo "  make start          - Start LocalStack and deploy the service"
-	@echo "  make stop           - Stop LocalStack and SAM API"
-	@echo "  make restart        - Restart LocalStack and redeploy"
-	@echo "  make build          - Build SAM application"
-	@echo "  make test-endpoint  - Quick test of the prediction endpoint"
-	@echo "  make clean          - Clean up everything"
+	@echo "	 make install		 - Install Python dependencies"
+	@echo "	 make train-models	 - Train and save ML models"
+	@echo "	 make start			 - Start LocalStack and deploy the service"
+	@echo "	 make stop			 - Stop LocalStack and SAM API"
+	@echo "	 make restart		 - Restart LocalStack and redeploy"
+	@echo "	 make build			 - Build SAM application"
+	@echo "	 make test-endpoint	 - Quick test of the prediction endpoint"
+	@echo "	 make clean			 - Clean up everything"
 	@echo ""
 
 # Install dependencies
@@ -25,6 +25,13 @@ install:
 	@echo "📦 Installing dependencies..."
 	uv pip install -r requirements.txt
 	@echo "✅ Dependencies installed!"
+
+# Setup pre-commit hooks
+setup-hooks:
+	@echo "🪝 Setting up pre-commit hooks..."
+	@uv tool install pre-commit
+	@uv tool run pre-commit install
+	@echo "✅ Pre-commit hooks installed!"
 
 # Train ML models
 train-models:
@@ -63,7 +70,7 @@ start: check-localstack build start-api test-endpoint
 	@echo "🚀 Service is running!"
 	@PID=$$(ps aux | grep '[s]am local start-api' | awk '{print $$2}' | head -1); \
 	if [ -n "$$PID" ]; then \
-		echo "   PID: $$PID"; \
+		echo "	 PID: $$PID"; \
 		echo ""; \
 		echo "📡 Endpoint: http://127.0.0.1:3000/predict"; \
 		echo ""; \

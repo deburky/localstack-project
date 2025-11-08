@@ -50,7 +50,7 @@ Outputs:
   PredictEndpoint:
     Description: API Gateway endpoint URL for Predict function
     Value: !Sub "http://localhost:4566/restapis/${PredictApi}/${Stage}/_user_request_/predict"
-  
+
   TestCommand:
     Description: Curl command to test the endpoint
     Value: !Sub |
