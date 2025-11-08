@@ -65,7 +65,17 @@ def handler(event, context):  # pylint: disable=unused-argument
             ),
         }
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": f"Invalid JSON: {str(e)}"}),
+        }
+    except (KeyError, ValueError, TypeError) as e:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": f"Invalid input: {str(e)}"}),
+        }
+    except Exception as e:
         return {
             "statusCode": 500,
             "body": json.dumps({"error": f"Internal server error: {str(e)}"}),
