@@ -4,10 +4,8 @@ services:
     container_name: localstack
     ports:
       - "4566:4566"   # main edge port
-      - "4571:4571"   # optional legacy port
     environment:
-      - SERVICES=s3,sqs,dynamodb,lambda,sts,iam,apigateway,cloudformation
-      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
       - DATA_DIR=/var/lib/localstack
       - LAMBDA_EXECUTOR=docker
       - DOCKER_HOST=unix:///var/run/docker.sock

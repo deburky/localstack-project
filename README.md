@@ -19,8 +19,7 @@ localstack-project/
 │   └── workflows/
 │       └── deploy-and-test.yml  # CI/CD pipeline
 ├── template.yaml             # SAM template for infrastructure
-├── deploy.sh                 # Deployment script
-├── Makefile                  # Convenient make commands
+├── Makefile                  # Build, deploy, and utility commands
 └── docker-compose.yml        # LocalStack configuration
 ```
 
@@ -91,8 +90,15 @@ pip install -r requirements.txt
 cd src && python train.py && cd ..
 
 # 3. Deploy
-./deploy.sh
+make start
 ```
+
+This single command will:
+- Start LocalStack
+- Train ML models
+- Build the SAM application
+- Start the API
+- Run a test prediction
 
 ## Available Make Commands
 

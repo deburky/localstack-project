@@ -8,7 +8,11 @@ scaler = joblib.load("scaler.pkl")
 outlier_detector = joblib.load("model.pkl")
 
 
-def handler(event, context):
+def handler(event, context):  # pylint: disable=unused-argument
+    """
+    Lambda handler that makes predictions using a simple function
+    Input event should contain 'features' key with list of 4 numbers
+    """
     try:
         # Parse input data
         body = json.loads(event["body"])
@@ -29,8 +33,8 @@ def handler(event, context):
             features_array
         )  # Use transform (not fit_transform)
         is_outlier = (
-            outlier_detector.predict(features_array)[0] == -1
-        )  # Use predict (not fit_predict)
+            outlier_detector.predict(features_scaled)[0] == -1
+        )  # Use predict on scaled data (not fit_predict)
 
         # Calculate feature importance
         abs_features = np.abs(features_array[0])
@@ -41,7 +45,7 @@ def handler(event, context):
             "base_prediction": float(np.mean(features_scaled) * 10),
             "confidence": float(1.0 / (1.0 + np.std(features_scaled))),
             "feature_importance": [float(x) for x in feature_importance],
-            "is_anomaly": is_outlier,
+            "is_anomaly": bool(is_outlier),
             "stats": {
                 "mean": float(np.mean(features)),
                 "std": float(np.std(features)),
@@ -61,7 +65,7 @@ def handler(event, context):
             ),
         }
 
-    except Exception as e:
+    except json.JSONDecodeError:
         return {
             "statusCode": 500,
             "body": json.dumps({"error": f"Internal server error: {str(e)}"}),
