@@ -8,8 +8,8 @@
 all: help
 
 help:
-	@echo "🚀 LocalStack ML Prediction Service - Available Commands:"
-	@echo ""
+@echo "🚀 LocalStack ML Prediction Service - Available Commands:"
+@echo ""
 	@echo "	 make install		 - Install Python dependencies"
 	@echo "	 make train-models	 - Train and save ML models"
 	@echo "	 make start			 - Start LocalStack and deploy the service"
